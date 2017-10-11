@@ -1,7 +1,9 @@
 #include <chrono>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <uv.h>
+#include <unistd.h>
 
 #include <cxxopts.hpp>
 
@@ -32,6 +34,33 @@ void timer_handler(uv_timer_t *handle) {
     std::cout << "Start passive metrics collection" << std::endl;
 }
 
+void daemonize() {
+    int pid = fork();
+    if (pid < 0) {
+        std::cerr << "Failed to fork" << std::endl;
+        exit(1);
+    } else if (pid > 0) {
+        std::cout << "Shutting down father process" << std::endl;
+        exit(0);
+    }
+
+    int sid = setsid();
+    if (sid < 0) {
+        std::cerr << "Failed to create new session" << std::endl;
+        exit(1);
+    }
+
+    close(STDIN_FILENO);
+    close(STDERR_FILENO);
+    close(STDOUT_FILENO);
+}
+
+void write_pid(const std::string &file_path) {
+    std::ofstream file(file_path);
+    file << getpid() << std::endl;
+    file.close();
+}
+
 int main(int argc, char **argv) {
     // Build version
     // TODO: move into Version.h as a function
@@ -49,6 +78,8 @@ int main(int argc, char **argv) {
         options.add_options()("s,storage", "Type of storage service to use", cxxopts::value<std::string>());
         options.add_options()("n,network", "Type of network service to use", cxxopts::value<std::string>());
         options.add_options()("h,help", "Print usage info");
+        options.add_options()("d,daemon", "Run storage in daemon mode");
+        options.add_options()("p,pid", "Write pid in file", cxxopts::value<std::string>());
         options.parse(argc, argv);
 
         if (options.count("help") > 0) {
@@ -58,6 +89,14 @@ int main(int argc, char **argv) {
     } catch (cxxopts::OptionParseException &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         return 1;
+    }
+
+    if (options.count("daemon") > 0) {
+        daemonize();
+    }
+
+    if (options.count("pid") > 0) {
+        write_pid(options["pid"].as<std::string>());
     }
 
     // Start boot sequence
