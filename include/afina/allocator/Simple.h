@@ -24,8 +24,8 @@ class Pointer;
 // TODO: Implements interface to allow usage as C++ allocators
 class Simple {
 public:
-    enum {DESCRIPTORS_INIT = 400};
-    enum {DESCRIPTORS_INC = 30};
+    enum {DESCRIPTORS_INIT = 100};
+    enum {DESCRIPTORS_INC = 20};
 
     Simple(void *base, const size_t size);
 

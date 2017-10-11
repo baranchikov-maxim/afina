@@ -280,7 +280,7 @@ void Simple::_extend_descriptors(size_t inc/**=DESCRIPTORS_INC**/) {
         _descriptor(_descriptors_len() + i) = _descriptors_len() + i + 1;
     }
     _descriptors_len() += inc;
-    _descriptor(_descriptors_len() - 1) = 0;
+    _descriptor(_descriptors_len() - 1) = first;
 }
 
 Block *Simple::_last_free_block() {
