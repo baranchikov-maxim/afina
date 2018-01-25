@@ -1,6 +1,7 @@
 #include "MapBasedGlobalLockImpl.h"
 
 #include <mutex>
+#include <algorithm>
 
 namespace Afina {
 namespace Backend {
@@ -12,13 +13,22 @@ bool MapBasedGlobalLockImpl::Put(const std::string &key, const std::string &valu
     auto iter = _backend.find(key);
     if (iter != _backend.end()) {
         iter->second = value;
+        auto hist_iter = std::find(_history.begin(), _history.end(), key);
+        _history.erase(hist_iter);
+        _history.push_back(key);
         return true;
+
     } else if (_backend.size() < _max_size) {
         _backend.insert( {key, value} );
+        _history.push_back(key);
         return true;
+
     } else {
-        _backend.erase(_backend.begin());
+        _backend.erase( _history.front() );
+        _history.pop_front();
+
         _backend.insert( {key, value} );
+        _history.push_back(key);
         return true;
     }
 }
@@ -41,6 +51,11 @@ bool MapBasedGlobalLockImpl::Set(const std::string &key, const std::string &valu
     if (iter == _backend.end()) {
         return false;
     }
+
+    auto hist_it = std::find(_history.begin(), _history.end(), key);
+    _history.erase(hist_it);
+    _history.push_back(key);
+
     iter->second = value;
     return true;
 }
@@ -53,6 +68,9 @@ bool MapBasedGlobalLockImpl::Delete(const std::string &key) {
     if (iter == _backend.end()) {
         return false;
     }
+
+    auto hist_it = std::find(_history.begin(), _history.end(), key);
+    _history.erase(hist_it);
     _backend.erase(iter);
     return true;
 }
@@ -65,6 +83,7 @@ bool MapBasedGlobalLockImpl::Get(const std::string &key, std::string &value) con
     if (iter == _backend.end()) {
         return false;
     }
+
     value = iter->second;
     return true;
 }

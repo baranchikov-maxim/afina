@@ -1,7 +1,8 @@
 #ifndef AFINA_STORAGE_MAP_BASED_GLOBAL_LOCK_IMPL_H
 #define AFINA_STORAGE_MAP_BASED_GLOBAL_LOCK_IMPL_H
 
-#include <unordered_map>
+#include <map>
+#include <list>
 #include <mutex>
 #include <string>
 
@@ -40,7 +41,8 @@ private:
 
     size_t _max_size;
 
-    std::unordered_map<std::string, std::string> _backend;
+    std::map<std::string, std::string> _backend;
+    mutable std::list<std::string> _history;
 };
 
 } // namespace Backend
