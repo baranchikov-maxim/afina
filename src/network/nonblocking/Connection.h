@@ -6,6 +6,8 @@
 
 #include <list>
 
+#include <afina/execute/Command.h>
+
 namespace Afina {
 
 namespace Protocol{
