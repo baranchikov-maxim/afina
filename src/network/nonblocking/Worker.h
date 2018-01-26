@@ -2,7 +2,10 @@
 #define AFINA_NETWORK_NONBLOCKING_WORKER_H
 
 #include <memory>
+#include <atomic>
 #include <pthread.h>
+
+#include <Connection.h>
 
 namespace Afina {
 
@@ -44,13 +47,23 @@ public:
     void Join();
 
 protected:
+    //typedef std::pair<bool *, int> OnRunArgs;
     /**
      * Method executing by background thread
      */
-    void OnRun(void *args);
+    void *OnRun(void *args);
 
 private:
-    pthread_t thread;
+    enum {EPOLL_MAX = 100, EPOLL_WAIT_TIMEOUT = 1000};
+
+    pthread_t _thread;
+    std::atomic<bool> _running;
+    std::shared_ptr<Afina::Storage> _storage;
+    int _server_socket;
+
+    int _epoll_fd;
+    epoll_event _epoll_events[EPOLL_MAX];
+    std::list<Connection> _connections;
 };
 
 } // namespace NonBlocking
